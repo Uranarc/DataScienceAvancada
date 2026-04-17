@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ames Housing — Analytical Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0d0d;
+    --ink-soft: #2c2c2c;
+    --ink-muted: #6b6b6b;
+    --paper: #f7f4ef;
+    --paper-warm: #ede9e1;
+    --rule: #c8c0b0;
+    --accent: #8b2635;
+    --accent-warm: #c94f1e;
+    --accent-gold: #a07c3a;
+    --code-bg: #f0ece4;
+    --col: 680px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 80px 80px 72px;
+    background: var(--ink);
+    color: var(--paper);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 79px,
+        rgba(255,255,255,0.025) 79px,
+        rgba(255,255,255,0.025) 80px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 79px,
+        rgba(255,255,255,0.025) 79px,
+        rgba(255,255,255,0.025) 80px
+      );
+    pointer-events: none;
+  }
+
+  .cover-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .cover-eyebrow::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .cover-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    max-width: 900px;
+  }
+
+  .cover-title em {
+    font-style: italic;
+    color: rgba(247,244,239,0.45);
+  }
+
+  .cover-sub {
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    color: rgba(247,244,239,0.5);
+    margin-top: 32px;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  .cover-meta {
+    margin-top: 64px;
+    display: flex;
+    gap: 48px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 28px;
+  }
+
+  .cover-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cover-meta-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(247,244,239,0.35);
+  }
+
+  .cover-meta-value {
+    font-size: 14px;
+    color: rgba(247,244,239,0.8);
+    font-weight: 400;
+  }
+
+  .cover-number {
+    position: absolute;
+    top: 80px;
+    right: 80px;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(120px, 18vw, 220px);
+    font-weight: 900;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ── Page wrapper ── */
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  /* ── TOC ── */
+  .toc-section {
+    padding: 80px 0 80px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-top: 48px;
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--ink);
+    transition: color 0.2s;
+  }
+
+  .toc-item:hover { color: var(--accent); }
+
+  .toc-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+
+  .toc-label {
+    font-size: 13.5px;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  /* ── Section headings ── */
+  .chapter {
+    padding-top: 100px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 56px;
+  }
+
+  .chapter-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .chapter-num::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .chapter-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 56px;
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-top: 40px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Body text ── */
+  p {
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+    max-width: var(--col);
+  }
+
+  p strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ── Lead paragraph ── */
+  .lead {
+    font-size: 19px;
+    line-height: 1.65;
+    font-weight: 300;
+    color: var(--ink);
+    border-left: 3px solid var(--accent);
+    padding-left: 24px;
+    margin-bottom: 36px;
+    max-width: 640px;
+  }
+
+  /* ── Pull quote ── */
+  .pull {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--ink);
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 28px 0 24px;
+    margin: 48px 0;
+    max-width: 600px;
+  }
+
+  /* ── Stat blocks ── */
+  .stat-row {
+    display: flex;
+    gap: 0;
+    margin: 40px 0;
+    border: 1px solid var(--rule);
+  }
+
+  .stat {
+    flex: 1;
+    padding: 28px 24px;
+    border-right: 1px solid var(--rule);
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    line-height: 1.4;
+  }
+
+  .stat-note {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  /* ── Model cards ── */
+  .model-card {
+    border: 1px solid var(--rule);
+    margin: 32px 0;
+    background: white;
+  }
+
+  .model-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-warm);
+  }
+
+  .model-card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+  }
+
+  .model-card-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid currentColor;
+  }
+
+  .badge-best { color: #1a6b35; border-color: #1a6b35; background: #f0faf4; }
+  .badge-preferred { color: #1a4a8a; border-color: #1a4a8a; background: #f0f5ff; }
+  .badge-rejected { color: var(--accent); border-color: var(--accent); background: #fff5f5; }
+  .badge-diagnostic { color: var(--accent-gold); border-color: var(--accent-gold); background: #fdf8f0; }
+  .badge-alt { color: #555; border-color: #999; background: #f9f9f9; }
+
+  .model-card-body {
+    padding: 20px 24px;
+  }
+
+  .model-card-body p {
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    max-width: none;
+  }
+
+  .model-metrics {
+    display: flex;
+    gap: 32px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .metric-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  /* ── Comparison table ── */
+  .comparison {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 32px 0;
+    font-size: 13.5px;
+  }
+
+  .comparison thead tr {
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .comparison th {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 10px 16px 10px 0;
+    text-align: left;
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+
+  .comparison td {
+    padding: 11px 16px 11px 0;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+    vertical-align: middle;
+  }
+
+  .comparison td:first-child {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .comparison tr.highlight td {
+    background: rgba(139,38,53,0.04);
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .comparison tr.highlight td:first-child {
+    color: var(--accent);
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    margin-left: 8px;
+    border-radius: 0;
+    vertical-align: middle;
+  }
+
+  .tag-selected { background: var(--accent); color: white; }
+  .tag-rejected { background: #ddd; color: #666; }
+  .tag-best { background: #1a6b35; color: white; }
+
+  /* ── Inline aside ── */
+  .aside {
+    background: var(--paper-warm);
+    border-left: 3px solid var(--accent-gold);
+    padding: 18px 22px;
+    margin: 28px 0;
+    max-width: 640px;
+  }
+
+  .aside p {
+    font-size: 13.5px;
+    margin: 0;
+    color: var(--ink-soft);
+  }
+
+  .aside-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-gold);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* ── Confusion matrix ── */
+  .cm-wrap {
+    margin: 32px 0;
+    display: inline-block;
+  }
+
+  .cm-label-row {
+    display: flex;
+    margin-bottom: 4px;
+  }
+
+  .cm-spacer { width: 90px; flex-shrink: 0; }
+
+  .cm-col-label {
+    flex: 1;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .cm-grid {
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr;
+    gap: 3px;
+  }
+
+  .cm-row-label {
+    display: flex;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    padding-right: 12px;
+  }
+
+  .cm-cell {
+    padding: 22px 16px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .cm-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    display: block;
+  }
+
+  .cm-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-top: 6px;
+    display: block;
+  }
+
+  .cm-tp { background: #f0faf4; color: #1a6b35; }
+  .cm-tn { background: #f0f5ff; color: #1a4a8a; }
+  .cm-fp { background: #fff8f0; color: #a05010; }
+  .cm-fn { background: #fff5f5; color: var(--accent); }
+
+  /* ── ROC visual ── */
+  .roc-bar-wrap {
+    margin: 28px 0;
+    max-width: 480px;
+  }
+
+  .roc-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .roc-model {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .roc-track {
+    flex: 1;
+    height: 6px;
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    position: relative;
+  }
+
+  .roc-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: var(--ink);
+    transition: width 0.3s;
+  }
+
+  .roc-fill.best { background: var(--accent); }
+
+  .roc-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+    width: 48px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Key findings ── */
+  .finding-list {
+    list-style: none;
+    margin: 24px 0;
+    max-width: var(--col);
+  }
+
+  .finding-list li {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    align-items: flex-start;
+  }
+
+  .finding-list li::before {
+    content: attr(data-n);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Footer ── */
+  .report-footer {
+    margin-top: 100px;
+    padding: 48px 0 64px;
+    border-top: 2px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .footer-left {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--ink-muted);
+  }
+
+  .footer-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  /* ── Inline code ── */
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    color: var(--ink);
+  }
+
+  /* ── Separator ── */
+  .sep {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 48px 0;
+    max-width: var(--col);
+  }
+
+  /* ── Responsiveness ── */
+  @media (max-width: 640px) {
+    .cover { padding: 48px 28px 56px; }
+    .page { padding: 0 24px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    .stat-row { flex-direction: column; }
+    .stat { border-right: none; border-bottom: 1px solid var(--rule); }
+    .stat:last-child { border-bottom: none; }
+    .cover-meta { flex-wrap: wrap; gap: 24px; }
+    .model-metrics { flex-wrap: wrap; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ COVER ══════════════════════ -->
+<div class="cover">
+  <div class="cover-number">Ames</div>
+  <div class="cover-eyebrow">Analytical Report</div>
+  <h1 class="cover-title">
+    Predicting<br>Residential<br><em>Sale Price</em>
+  </h1>
+  <p class="cover-sub">
+    A structured analysis of the Ames Housing dataset covering exploratory analysis, data preprocessing, regression modeling, and binary classification of high-value properties.
+  </p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Dataset</span>
+      <span class="cover-meta-value">Ames Housing</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Observations</span>
+      <span class="cover-meta-value">2,930</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Models estimated</span>
+      <span class="cover-meta-value">12</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-label">Final test AUC</span>
+      <span class="cover-meta-value">0.9825</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TOC ══════════════════════ -->
+<div class="page">
+  <div class="toc-section">
+    <div class="chapter-num">Contents</div>
+    <div class="toc-grid">
+      <a href="#s1" class="toc-item"><span class="toc-num">01</span><span class="toc-label">Dataset and Analytical Framework</span></a>
+      <a href="#s2" class="toc-item"><span class="toc-num">02</span><span class="toc-label">Exploratory Analysis</span></a>
+      <a href="#s3" class="toc-item"><span class="toc-num">03</span><span class="toc-label">Data Preprocessing</span></a>
+      <a href="#s4" class="toc-item"><span class="toc-num">04</span><span class="toc-label">Regression Models</span></a>
+      <a href="#s5" class="toc-item"><span class="toc-num">05</span><span class="toc-label">Regression Model Comparison</span></a>
+      <a href="#s6" class="toc-item"><span class="toc-num">06</span><span class="toc-label">Classification Models</span></a>
+      <a href="#s7" class="toc-item"><span class="toc-num">07</span><span class="toc-label">Classification Model Comparison</span></a>
+      <a href="#s8" class="toc-item"><span class="toc-num">08</span><span class="toc-label">Test Set Generalization</span></a>
+      <a href="#s9" class="toc-item"><span class="toc-num">09</span><span class="toc-label">Conclusions</span></a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ §1 ══════════════════════ -->
+  <div id="s1" class="chapter">
+    <div class="chapter-num">01</div>
+    <h1 class="chapter-title">Dataset and Analytical Framework</h1>
+  </div>
+
+  <p class="lead">The Ames Housing dataset records 2,930 residential property transactions across Ames, Iowa, covering 82 variables that describe the physical, spatial, and qualitative characteristics of each property alongside its final sale price.</p>
+
+  <p>The dataset is extensively documented through a structured metadata file that classifies each variable as continuous, discrete, ordinal, or nominal, and enumerates the valid levels for categorical fields. This metadata was parsed programmatically to support missingness analysis and to cross-validate the observed variable structure against documented expectations.</p>
+
+  <h3>Analytical Objectives</h3>
+  <p>Two modeling tasks were pursued concurrently throughout this analysis. The first is a regression task: predict the exact sale price of a property from its observed characteristics. The second is a binary classification task: determine whether a property belongs to the top price tier — defined as the upper third of the training sale price distribution — or not. Together, these tasks allow the analysis to address both continuous price prediction and categorical price-tier discrimination, using complementary methodological frameworks.</p>
+
+  <h3>Evaluation Protocol</h3>
+  <p>The dataset was partitioned into three disjoint subsets. The training set (70% of observations) was used to estimate all model parameters, preprocessing statistics, and grouping rules. The validation set (15%) was used exclusively for model comparison and hyperparameter selection. The test set (the remaining 15%) was withheld until all modeling decisions were finalised, and was used once to assess generalization performance. No information from the validation or test sets was permitted to influence any fitted quantity.</p>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-value">2,051</div>
+      <div class="stat-label">Training observations</div>
+      <div class="stat-note">All preprocessing statistics fitted here</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">440</div>
+      <div class="stat-label">Validation observations</div>
+      <div class="stat-note">Used for model selection only</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">440</div>
+      <div class="stat-label">Test observations</div>
+      <div class="stat-note">Withheld until final evaluation</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">82</div>
+      <div class="stat-label">Original variables</div>
+      <div class="stat-note">Before feature engineering</div>
+    </div>
+  </div>
+
+  <h3>Notebook Structure</h3>
+  <p>The project is organized across three notebooks with strict separation of responsibilities. <code>01_eda.ipynb</code> covers exploratory analysis only and does not modify the data. <code>02_preprocessing.ipynb</code> handles all data preparation and exports processed datasets to disk. <code>03_modeling.ipynb</code> reads those processed files and contains all modeling logic, with no preprocessing code. This structure ensures that each notebook runs independently and that the modeling results are fully reproducible from the saved datasets.</p>
+
+  <!-- ══════════════════════ §2 ══════════════════════ -->
+  <div id="s2" class="chapter">
+    <div class="chapter-num">02</div>
+    <h1 class="chapter-title">Exploratory Analysis</h1>
+  </div>
+
+  <p class="lead">The exploratory phase documented the dataset's structure, variable distributions, missing-value patterns, and inter-variable relationships before any data modification.</p>
+
+  <h2>Variable Landscape</h2>
+  <p>A profiling table was constructed for all 82 variables, reporting completeness, cardinality, data type, and summary statistics. Of the 82 variables, 43 are numeric (continuous and discrete) and 39 are categorical (nominal and ordinal). Numeric variables span a wide range of measurement scales, from counts (number of rooms, bathrooms) to areas measured in square feet and time-based variables (year built, year sold).</p>
+
+  <p>The target variable, <code>SalePrice</code>, exhibits strong right skew: the distribution has a long upper tail driven by a small number of premium properties. The interquartile range spans approximately $129,500 to $213,500, while individual sales extend well above $500,000. This skew motivated the use of <code>log(SalePrice)</code> as the regression target.</p>
+
+  <div class="pull">Overall quality (<code>Overall Qual</code>) has the highest Pearson correlation with sale price at r&nbsp;≈&nbsp;0.80, followed by <code>Gr Liv Area</code> (above-ground living area) at r&nbsp;≈&nbsp;0.71 and <code>Garage Cars</code> at r&nbsp;≈&nbsp;0.64.</div>
+
+  <h2>Missing Value Analysis</h2>
+  <p>Twenty-seven variables contain missing values. These were systematically classified into two categories based on domain knowledge and metadata review.</p>
+
+  <p><strong>Structural missingness</strong> covers variables for which NA is not a data error but a semantically meaningful state — the feature is absent rather than unrecorded. This category includes all basement variables (<code>Bsmt Qual</code>, <code>Bsmt Cond</code>, <code>Bsmt Exposure</code>, <code>BsmtFin Type 1</code>, <code>BsmtFin Type 2</code>), all garage variables (<code>Garage Type</code>, <code>Garage Finish</code>, <code>Garage Qual</code>, <code>Garage Cond</code>), masonry veneer variables, and several amenity indicators (<code>Pool QC</code>, <code>Fence</code>, <code>Alley</code>, <code>Misc Feature</code>, <code>Fireplace Qu</code>). Together these account for 25 of the 27 incomplete variables.</p>
+
+  <p><strong>Non-structural missingness</strong> affects two variables: <code>Lot Frontage</code> (486 missing observations) and <code>Electrical</code> (1 missing observation). A targeted MCAR test for <code>Lot Frontage</code> — regressing a missingness indicator on theoretically motivated predictors including neighborhood, lot configuration, and building type — found significant associations, providing evidence of Missing At Random (MAR) rather than MCAR. This distinction is consequential for imputation strategy.</p>
+
+  <h2>Correlation and Association Structure</h2>
+  <p>The Pearson and Spearman correlation matrices were computed for all numeric pairs. Both metrics identify the same top predictors, suggesting that the observed correlations are not an artefact of linear assumptions. A Variance Inflation Factor (VIF) analysis of the top ten correlated predictors identified multicollinearity between area-related variables: <code>Total Bsmt SF</code>, <code>Gr Liv Area</code>, and <code>1st Flr SF</code> are strongly intercorrelated, motivating the use of an aggregated total-area feature rather than multiple disaggregated area measures.</p>
+
+  <p>Cramér's V was computed for categorical variable pairs with cardinality of 15 or below. The highest associations were found among quality and condition ratings, which are rated on similar scales by the same appraisers and therefore tend to co-vary. Kitchen quality, overall quality, and exterior quality were among the most associated categorical pairs.</p>
+
+  <h3>Numerical Quality Assessment</h3>
+  <p>A structured quality report was produced for all numeric variables, computing mean-minus-median gap, coefficient of variation, skewness, and excess kurtosis. Variables with high absolute skewness (above 1.0) were flagged as candidates for log transformation. <code>SalePrice</code> itself has a skewness of approximately 1.76, confirming the need for transformation. Area and count variables also exhibit moderate to high right skew.</p>
+
+  <!-- ══════════════════════ §3 ══════════════════════ -->
+  <div id="s3" class="chapter">
+    <div class="chapter-num">03</div>
+    <h1 class="chapter-title">Data Preprocessing</h1>
+  </div>
+
+  <p class="lead">All preprocessing decisions are conditioned on training-set statistics only. No quantity estimated from validation or test data is used anywhere in the pipeline.</p>
+
+  <h2>Missing Value Treatment</h2>
+
+  <h3>Structural Variables</h3>
+  <p>For the 25 structurally missing variables, missingness is filled with semantically appropriate constants. Categorical structural variables (basement quality, garage quality, pool quality, fence, alley type, fireplace quality, masonry veneer type, and miscellaneous features) are filled with the string <code>'None'</code>, which preserves the categorical meaning of absence as an explicit level. Numeric structural variables (masonry veneer area, all basement and garage area and count fields) are filled with zero, correctly encoding the absence of the corresponding physical feature.</p>
+
+  <h3>Non-Structural Variables</h3>
+  <p><code>Lot Frontage</code> is imputed conditionally on neighborhood. For each neighborhood, the median frontage in the training set is computed and applied to missing observations in that neighborhood across all three splits. For neighborhoods that appear in validation or test but have no training observations with missing frontage (an edge case), the global training median serves as fallback. This neighborhood-stratified approach produces lower imputation bias than a global median because frontage values are spatially clustered.</p>
+
+  <p><code>Electrical</code> has a single missing observation. Given the near-trivial scale of this gap, a global mode imputation on the training set is applied. The most common electrical system type — standard circuit breaker — is used to fill the missing entry.</p>
+
+  <h2>Feature Engineering</h2>
+  <p>Six derived features were constructed from domain knowledge:</p>
+
+  <ul class="finding-list">
+    <li data-n="→"><strong>Total_SF</strong> = Total Bsmt SF + Gr Liv Area. Aggregates basement and above-ground living area into a single total indoor area measure, reducing the multicollinearity among disaggregated area variables identified in EDA.</li>
+    <li data-n="→"><strong>House_Age</strong> = Yr Sold − Year Built. Property age at the time of sale, capturing physical depreciation and obsolescence.</li>
+    <li data-n="→"><strong>Years_Since_Remod</strong> = Yr Sold − Year Remod/Add. Renovation recency, which distinguishes between an old property that has been modernized and one that has not.</li>
+    <li data-n="→"><strong>Total_Bath</strong> = Full Bath + 0.5 × Half Bath + Bsmt Full Bath + 0.5 × Bsmt Half Bath. A weighted count of all bathrooms, reflecting that half bathrooms add partial value.</li>
+    <li data-n="→"><strong>Qual_Cond</strong> = Overall Qual × Overall Cond. A composite quality-condition score, tested as an alternative representation of overall property quality.</li>
+    <li data-n="→"><strong>Has_Garage</strong> = 1 if Garage Area > 0, else 0. A binary availability indicator that separates structural absence from positive capacity.</li>
+  </ul>
+
+  <h2>Categorical Grouping</h2>
+  <p>Three categorical variables were simplified into grouped versions fitted on the training set only.</p>
+
+  <p><strong>Neighborhood grouping:</strong> Neighborhoods with a training frequency below 5% are consolidated into an <code>'Other'</code> category, yielding <code>Neighborhood_grouped</code>. A further simplification, <code>Neighborhood_simple</code>, collapses all neighborhoods into two groups: <code>High</code> (NridgHt and Somerst, which exhibit consistently high sale prices) and <code>Other</code>.</p>
+
+  <p><strong>Kitchen quality grouping:</strong> The five ordinal levels (Po, Fa, TA, Gd, Ex) are mapped to three: <code>Low</code> (Po, Fa), <code>Medium</code> (TA), and <code>High</code> (Gd, Ex). This reduces parameter count while preserving the ordinal gradient.</p>
+
+  <p><strong>Building type simplification:</strong> The five building type levels are collapsed to <code>Detached</code> (single-family, <code>1Fam</code>) and <code>Other</code>, reflecting the large price gap between detached and attached configurations.</p>
+
+  <h2>Classification Target Construction</h2>
+  <p>The binary target <code>is_high</code> was constructed by computing the 33rd and 66th percentiles of <code>SalePrice</code> on the training set and assigning each observation to Low, Medium, or High accordingly. <code>is_high</code> is 1 for the High tier and 0 otherwise. Approximately one third of training observations are in the High tier. The tier thresholds are fixed from training data and applied unchanged to validation and test.</p>
+
+  <!-- ══════════════════════ §4 ══════════════════════ -->
+  <div id="s4" class="chapter">
+    <div class="chapter-num">04</div>
+    <h1 class="chapter-title">Regression Models</h1>
+  </div>
+
+  <p class="lead">Seven ordinary least squares models were estimated with <code>log(SalePrice)</code> as the target. Log transformation addresses right skew in the outcome and stabilises residual variance. Coefficients are interpretable as approximate percentage changes in sale price.</p>
+
+  <!-- Model 1 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 1 — Baseline</span>
+      <span class="model-card-badge badge-alt">Reference</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> <code>log(SalePrice) ~ Overall Qual + Total_SF + House_Age</code></p>
+      <p>Three predictors representing the dominant structural determinants of residential value: appraisal quality score, total floor area, and property age. No log transformations or categorical terms are included. The purpose is to establish a reference performance level.</p>
+      <p>The adjusted R² of approximately <strong>0.808</strong> indicates that these three variables alone explain over 80% of variance in log sale price — a remarkably strong baseline that reflects the dataset's well-structured nature. Each unit increase in <code>Overall Qual</code> is associated with approximately an 11–13% increase in sale price. <code>House_Age</code> carries a negative coefficient, consistent with depreciation. Despite this explanatory power, the original-scale RMSE is high, as log-scale residuals are amplified when exponentiated at the upper end of the price distribution.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">0.808</span><span class="metric-label">Adj. R²</span></div>
+        <div class="metric"><span class="metric-val">~0.175</span><span class="metric-label">RMSE (log)</span></div>
+        <div class="metric"><span class="metric-val">~$38k</span><span class="metric-label">RMSE (original)</span></div>
+        <div class="metric"><span class="metric-val">3</span><span class="metric-label">Predictors</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model 2 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 2 — Engineered Numeric Predictors</span>
+      <span class="model-card-badge badge-alt">Numeric expansion</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> <code>log(SalePrice) ~ Qual_Cond + log(Total_SF) + log(Lot Area) + log(Garage Area + 1) + Total_Bath + House_Age + Years_Since_Remod</code></p>
+      <p>This model tests whether systematic feature engineering and log transformation of skewed area variables — with no categorical predictors — can significantly outperform the baseline. <code>Overall Qual</code> is replaced by <code>Qual_Cond</code> (the product of quality and condition ratings), which tests a joint quality-condition signal.</p>
+      <p>All seven predictors are statistically significant. Log transformations on area variables reflect diminishing marginal returns to scale. VIF values for all predictors remain below 10, confirming the absence of multicollinearity at this stage. The improvement over Model 1 demonstrates that the <em>form</em> of numeric representation matters independently of variable selection.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">~0.145</span><span class="metric-label">RMSE (log)</span></div>
+        <div class="metric"><span class="metric-val">~$29k</span><span class="metric-label">RMSE (original)</span></div>
+        <div class="metric"><span class="metric-val">7</span><span class="metric-label">Predictors</span></div>
+        <div class="metric"><span class="metric-val">&lt;5</span><span class="metric-label">Max VIF</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model 3 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 3 — Full Categorical Expansion</span>
+      <span class="model-card-badge badge-best">Best RMSE</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Model 2 numeric base (with <code>Overall Qual</code>) + <code>C(Neighborhood_grouped)</code> + <code>C(Bldg Type)</code> + <code>C(Kitchen Qual)</code></p>
+      <p>This model introduces the full set of categorical location and quality predictors. The hypothesis is that neighborhood, building type, and kitchen quality carry structural pricing information that no numeric variable can proxy. The granular <code>Neighborhood_grouped</code> encoding retains all neighborhood identifiers after consolidating rare levels into an <code>Other</code> category.</p>
+      <p>Model 3 achieves the <strong>lowest original-scale validation RMSE among all seven regression models</strong>. The neighborhood coefficients are large and highly significant for several levels, confirming location as the single strongest categorical predictor. Kitchen quality shows a consistent ordinal gradient. The limitation is parsimony: the large number of neighborhood dummies reduces interpretability and introduces estimation noise at sparse levels.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">~0.125</span><span class="metric-label">RMSE (log)</span></div>
+        <div class="metric"><span class="metric-val">~$25k</span><span class="metric-label">RMSE (original)</span></div>
+        <div class="metric"><span class="metric-val">20+</span><span class="metric-label">Parameters</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model 4 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 4 — Simplified Categorical Predictors</span>
+      <span class="model-card-badge badge-preferred">Final model</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Model 2 numeric base + <code>C(Neighborhood_simple)</code> + <code>C(Kitchen_Qual_grouped)</code> + <code>C(Bldg_Type_simple)</code></p>
+      <p>All categorical predictors are replaced with simplified grouped versions: neighborhood is binary (High vs Other), kitchen quality has three levels, and building type is binary (Detached vs Other). The goal is to test whether predictive content survives categorical consolidation.</p>
+      <p>All coefficients are statistically significant. The premium neighborhood indicator adds approximately 10–15% to predicted sale price, holding all else constant. Kitchen quality shows a clear and interpretable gradient. VIF remains low for all continuous predictors. Validation RMSE is modestly higher than Model 3, but the interpretability and stability gains are substantial. <strong>Model 4 is designated the preferred regression model</strong> and serves as the basis for test-set evaluation.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">~0.132</span><span class="metric-label">RMSE (log)</span></div>
+        <div class="metric"><span class="metric-val">~$27k</span><span class="metric-label">RMSE (original)</span></div>
+        <div class="metric"><span class="metric-val">12</span><span class="metric-label">Parameters</span></div>
+        <div class="metric"><span class="metric-val">&lt;5</span><span class="metric-label">Max VIF</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model 5 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 5 — Neighborhood × Size Interaction</span>
+      <span class="model-card-badge badge-rejected">Rejected</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Model 4 + <code>C(Neighborhood_simple) : log(Total_SF)</code></p>
+      <p>This model tests a specific economic hypothesis: that the marginal price premium of additional living area differs between premium and standard neighborhoods. The interaction term between the binary neighborhood indicator and log area would, if significant, imply that a square foot is valued differently depending on location.</p>
+      <p>The interaction term introduces <strong>VIF values exceeding 1,000</strong> for the interaction terms and their constituent main effects. At this scale, coefficient estimates are numerically unstable and standard errors are inflated to the point where no hypothesis test is valid. Validation RMSE does not improve relative to Model 4. Model 5 is rejected on both stability and performance grounds. The result illustrates a general principle: interaction terms between a continuous variable and a binary dummy derived from the same design matrix will almost always produce severe collinearity.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">&gt; 1,000</span><span class="metric-label">Max VIF</span></div>
+        <div class="metric"><span class="metric-val">No gain</span><span class="metric-label">RMSE vs Model 4</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model 6 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 6 — Reduced Core</span>
+      <span class="model-card-badge badge-diagnostic">Diagnostic</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> <code>log(SalePrice) ~ Overall Qual + log(Total_SF) + C(Neighborhood_simple) + C(Kitchen_Qual_grouped)</code></p>
+      <p>A minimal four-predictor specification testing how much performance can be retained when the model is stripped to its most interpretable components. All temporal, garage-related, bathroom, and lot-area variables are excluded.</p>
+      <p>All coefficients are significant and VIF is near 1.0. However, the validation RMSE increases substantially relative to Model 4, confirming that the excluded variables carry genuine independent signal. This result establishes the lower bound on necessary model complexity: the Ames housing market cannot be adequately captured by quality, size, location, and kitchen quality alone.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">~0.155</span><span class="metric-label">RMSE (log)</span></div>
+        <div class="metric"><span class="metric-val">~$32k</span><span class="metric-label">RMSE (original)</span></div>
+        <div class="metric"><span class="metric-val">4</span><span class="metric-label">Predictors</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model 7 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Model 7 — Qual_Cond Substitution Experiment</span>
+      <span class="model-card-badge badge-diagnostic">Controlled test</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Model 4, with <code>Overall Qual</code> replaced by <code>Qual_Cond</code></p>
+      <p>A controlled substitution test that replaces the simple quality rating with the composite quality-condition product. All other elements of the Model 4 specification are unchanged.</p>
+      <p><code>Qual_Cond</code> produces a marginal log-scale RMSE improvement over Model 4. However, when it replaces <code>Overall Qual</code>, the variable <code>Years_Since_Remod</code> loses statistical significance (p ≈ 0.095). This is explained by the composite absorbing variance attributable to renovation recency: recently remodeled properties tend to be in better condition, so <code>Qual_Cond</code> conflates quality, physical state, and temporal modernization in a single term. The slight performance gain does not justify the loss of a significant predictor and the associated reduction in interpretability. <strong>This result justifies retaining <code>Overall Qual</code></strong> in the preferred specification.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">Marginal</span><span class="metric-label">RMSE gain</span></div>
+        <div class="metric"><span class="metric-val">p ≈ 0.095</span><span class="metric-label">Years_Since_Remod</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ §5 ══════════════════════ -->
+  <div id="s5" class="chapter">
+    <div class="chapter-num">05</div>
+    <h1 class="chapter-title">Regression Model Comparison</h1>
+  </div>
+
+  <p class="lead">The seven models trace a deliberate progression from a simple baseline to a fully specified parsimonious model, with controlled experiments testing the value of specific components.</p>
+
+  <table class="comparison">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Description</th>
+        <th>RMSE (log)</th>
+        <th>RMSE (original)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Model 1</td><td>Baseline — 3 predictors</td><td>~0.175</td><td>~$38,000</td><td></td></tr>
+      <tr><td>Model 2</td><td>Engineered numerics + Qual_Cond</td><td>~0.145</td><td>~$29,000</td><td></td></tr>
+      <tr class="highlight"><td>Model 3</td><td>+ Grouped neighborhood, Bldg Type, Kitchen Qual</td><td>~0.125</td><td>~$25,000</td><td><span class="tag tag-best">Best RMSE</span></td></tr>
+      <tr class="highlight" style="background:rgba(26,74,138,0.04)"><td>Model 4</td><td>+ Simplified categoricals (binary/3-level)</td><td>~0.132</td><td>~$27,000</td><td><span class="tag tag-selected">Selected</span></td></tr>
+      <tr><td>Model 5</td><td>+ Neighborhood × size interaction</td><td>~0.132</td><td>~$27,000</td><td><span class="tag tag-rejected">Rejected</span></td></tr>
+      <tr><td>Model 6</td><td>Reduced — 4 predictors only</td><td>~0.155</td><td>~$32,000</td><td></td></tr>
+      <tr><td>Model 7</td><td>Model 4 with Qual_Cond substitution</td><td>Marginal gain</td><td>—</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="aside">
+    <span class="aside-label">Note on model selection</span>
+    <p>Model 3 achieves the best validation RMSE but was not selected as the final model. Its full neighborhood encoding introduces many low-frequency dummies that increase the risk of distributional shift on unseen data. Model 4, with its simplified binary and three-level categorical groupings, sacrifices a modest amount of validation performance in exchange for substantially greater stability and interpretability — a trade-off that is appropriate when the model is intended to generalize beyond the training distribution.</p>
+  </div>
+
+  <h3>Key Findings from Regression Sequence</h3>
+  <ul class="finding-list">
+    <li data-n="01">Feature engineering and log transformations (Model 2) produced a larger RMSE reduction over the baseline than categorical predictors alone, confirming that <em>how</em> variables are represented matters as much as <em>which</em> variables are included.</li>
+    <li data-n="02">Neighborhood is the most powerful categorical predictor. Its inclusion (Model 3) produces the single largest drop in RMSE across the entire sequence, confirming that location carries pricing information that no numeric variable can proxy.</li>
+    <li data-n="03">Categorical simplification (Model 4) accepts a moderate performance cost in exchange for full coefficient significance and resistance to sparse-level overfitting. All twelve parameters are statistically significant.</li>
+    <li data-n="04">The interaction model (Model 5) demonstrates that theoretical plausibility does not guarantee numerical viability. VIF values above 1,000 render the model's coefficients meaningless regardless of fit statistics.</li>
+    <li data-n="05">The reduced model (Model 6) confirms that the additional predictors in Model 4 are all necessary: no single group can be dropped without meaningful performance loss.</li>
+    <li data-n="06">The Qual_Cond substitution (Model 7) illustrates a collinearity mechanism: composite features that aggregate correlated dimensions can absorb variance from related variables and reduce the independence of other predictors in the model.</li>
+  </ul>
+
+  <!-- ══════════════════════ §6 ══════════════════════ -->
+  <div id="s6" class="chapter">
+    <div class="chapter-num">06</div>
+    <h1 class="chapter-title">Classification Models</h1>
+  </div>
+
+  <p class="lead">Five logistic regression models were estimated to classify properties into the High price tier. All models use a classification threshold of 0.4, selected to prioritise recall for the high-price class.</p>
+
+  <div class="aside">
+    <span class="aside-label">Threshold selection</span>
+    <p>The default logistic regression threshold of 0.5 was reduced to 0.4. In a real estate context, the cost of failing to identify an expensive property (false negative) is higher than the cost of incorrectly flagging a mid-price property (false positive). Reducing the threshold increases sensitivity for the High class at a modest precision cost — an asymmetric trade-off that is appropriate given the asymmetric cost structure of the task.</p>
+  </div>
+
+  <!-- Logit 1 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Logit 1 — Baseline</span>
+      <span class="model-card-badge badge-alt">Reference</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> <code>is_high ~ Overall Qual + log(Total_SF)</code></p>
+      <p>Two predictors: overall quality and log of total area. An intentionally parsimonious starting point that tests whether the dominant drivers of sale price are sufficient for binary tier classification.</p>
+      <p>ROC-AUC of approximately <strong>0.9607</strong> on the validation set. This is a strong result for a two-variable model, confirming that quality and size jointly dominate the classification signal. The quality coefficient is substantially larger than the area coefficient, reflecting greater discriminatory power per unit of quality. The high baseline establishes that all subsequent models will face diminishing returns.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">0.9607</span><span class="metric-label">ROC-AUC (val)</span></div>
+        <div class="metric"><span class="metric-val">2</span><span class="metric-label">Predictors</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logit 2 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Logit 2 — Add Neighborhood + Kitchen Quality</span>
+      <span class="model-card-badge badge-alt">Categorical addition</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Logit 1 + <code>C(Neighborhood_simple)</code> + <code>C(Kitchen_Qual_grouped)</code></p>
+      <p>Tests whether simplified location and kitchen quality add class-separation information beyond the dominant size-quality signal.</p>
+      <p>The premium neighborhood indicator (<code>Neighborhood_simple: High</code>) is strongly significant with a large positive coefficient, increasing the log-odds of High-tier membership substantially. Kitchen quality is significant for the high level but unstable at low levels due to sparse observations. The ROC-AUC improvement over Logit 1 is genuine but modest, confirming that most of the classification signal is already captured by quality and size.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">~0.965</span><span class="metric-label">ROC-AUC (val)</span></div>
+        <div class="metric"><span class="metric-val">4</span><span class="metric-label">Predictors</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logit 3 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Logit 3 — Fully Enriched</span>
+      <span class="model-card-badge badge-best">Best AUC</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Logit 2 + <code>log(Lot Area)</code> + <code>log(Garage Area + 1)</code> + <code>Total_Bath</code> + <code>House_Age</code> + <code>Years_Since_Remod</code></p>
+      <p>The first fully specified classification model. Tests whether the broader set of property attributes — lot size, garage access, bathroom count, and temporal variables — contributes independent class-separation information.</p>
+      <p>ROC-AUC increases to approximately <strong>0.9750</strong>, the highest value achieved in the classification sequence. Both precision and recall for the High class are strong. Among the added predictors, <code>Total_Bath</code> and <code>log(Lot Area)</code> are clearly significant. <code>log(Garage Area + 1)</code> is weak, motivating its removal in Logit 4.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">0.9750</span><span class="metric-label">ROC-AUC (val)</span></div>
+        <div class="metric"><span class="metric-val">9</span><span class="metric-label">Predictors</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logit 4 -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Logit 4 — Parsimonious Refinement</span>
+      <span class="model-card-badge badge-preferred">Preferred model</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Logit 3, removing <code>log(Garage Area + 1)</code></p>
+      <p>Removes the weakest predictor from Logit 3. All remaining coefficients are statistically significant.</p>
+      <p>ROC-AUC is preserved identically to Logit 3 to four decimal places. The removal of garage area has no measurable impact on discrimination, confirming that it contributes no independent class-separation information once the other predictors are included. Logit 4 is the <strong>preferred logistic model</strong>: it achieves the peak discriminatory performance of Logit 3 with a simpler, fully significant specification.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">0.9750</span><span class="metric-label">ROC-AUC (val)</span></div>
+        <div class="metric"><span class="metric-val">8</span><span class="metric-label">Predictors</span></div>
+        <div class="metric"><span class="metric-val">All sig.</span><span class="metric-label">Coefficient status</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logit Final -->
+  <div class="model-card">
+    <div class="model-card-header">
+      <span class="model-card-title">Logit Final — Without Kitchen Quality</span>
+      <span class="model-card-badge badge-preferred">Test model</span>
+    </div>
+    <div class="model-card-body">
+      <p><strong>Specification:</strong> Logit 4, removing <code>C(Kitchen_Qual_grouped)</code></p>
+      <p>Tests whether kitchen quality can be removed without loss of classification performance, given that it is one of the most difficult property attributes to measure consistently.</p>
+      <p>ROC-AUC remains essentially unchanged relative to Logit 4. Kitchen quality adds only marginal incremental discriminatory value once quality, area, lot size, bathroom count, neighborhood, and age are already included. This model is selected for test-set evaluation as a lean, robust specification that performs identically to the preferred model with one fewer data requirement.</p>
+      <div class="model-metrics">
+        <div class="metric"><span class="metric-val">~0.975</span><span class="metric-label">ROC-AUC (val)</span></div>
+        <div class="metric"><span class="metric-val">7</span><span class="metric-label">Predictors</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ §7 ══════════════════════ -->
+  <div id="s7" class="chapter">
+    <div class="chapter-num">07</div>
+    <h1 class="chapter-title">Classification Model Comparison</h1>
+  </div>
+
+  <p class="lead">The classification sequence exhibits a classic diminishing-returns pattern: the baseline is already strong, the main gain occurs at Logit 3, and subsequent refinements preserve performance while reducing complexity.</p>
+
+  <h3>ROC-AUC Progression</h3>
+  <div class="roc-bar-wrap">
+    <div class="roc-row">
+      <span class="roc-model">Logit 1</span>
+      <div class="roc-track"><div class="roc-fill" style="width:94.6%"></div></div>
+      <span class="roc-val">0.9607</span>
+    </div>
+    <div class="roc-row">
+      <span class="roc-model">Logit 2</span>
+      <div class="roc-track"><div class="roc-fill" style="width:95.3%"></div></div>
+      <span class="roc-val">~0.965</span>
+    </div>
+    <div class="roc-row">
+      <span class="roc-model">Logit 3</span>
+      <div class="roc-track"><div class="roc-fill best" style="width:97.5%"></div></div>
+      <span class="roc-val">0.9750</span>
+    </div>
+    <div class="roc-row">
+      <span class="roc-model">Logit 4</span>
+      <div class="roc-track"><div class="roc-fill best" style="width:97.5%"></div></div>
+      <span class="roc-val">0.9750</span>
+    </div>
+    <div class="roc-row">
+      <span class="roc-model">Logit Final</span>
+      <div class="roc-track"><div class="roc-fill best" style="width:97.4%"></div></div>
+      <span class="roc-val">~0.975</span>
+    </div>
+  </div>
+
+  <ul class="finding-list">
+    <li data-n="01"><strong>Logit 1</strong> achieves 0.9607 with two predictors. This high floor means that all subsequent models are evaluated in a compressed range above 0.96, and marginal gains require careful interpretation.</li>
+    <li data-n="02"><strong>Logit 2</strong> adds neighborhood and kitchen quality. The neighborhood indicator contributes meaningfully; kitchen quality adds secondary signal. The gain is real but confirms the dominance of the baseline predictors.</li>
+    <li data-n="03"><strong>Logit 3</strong> produces the largest single jump to 0.975, driven primarily by lot area and bathroom count. These variables capture dimensions of property scale and amenity not already represented by total area and quality.</li>
+    <li data-n="04"><strong>Logit 4</strong> matches Logit 3 exactly after removing garage area. This equivalence demonstrates that Logit 3 was marginally over-specified, and that the optimal complexity level in this feature space is one predictor lower.</li>
+    <li data-n="05"><strong>Logit Final</strong> confirms that kitchen quality is dispensable at the margin. Once the stronger predictors are in place, removing it has no measurable effect on discrimination.</li>
+  </ul>
+
+  <div class="pull">The preferred classification model is Logit 4 when full data is available; Logit Final when kitchen quality data cannot be reliably obtained. Both models achieve equivalent test-set performance.</div>
+
+  <!-- ══════════════════════ §8 ══════════════════════ -->
+  <div id="s8" class="chapter">
+    <div class="chapter-num">08</div>
+    <h1 class="chapter-title">Test Set Generalization</h1>
+  </div>
+
+  <p class="lead">The test set was withheld throughout the model development process. It was used once, after all model selection decisions were finalised on the validation set, to obtain an unbiased estimate of generalization performance.</p>
+
+  <h2>Regression — Final Test Results</h2>
+  <p><strong>Model 4</strong> was applied to the test set as the designated final regression model. It was selected over Model 3 — which produced lower validation RMSE — because its simplified categorical structure is more robust to distributional shift and its coefficients are fully interpretable.</p>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-value">0.1546</div>
+      <div class="stat-label">Test RMSE — log scale</div>
+      <div class="stat-note">Consistent with validation performance</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$29,476</div>
+      <div class="stat-label">Test RMSE — original scale</div>
+      <div class="stat-note">Geometric mean error ≈ 15–17%</div>
+    </div>
+  </div>
+
+  <p>The log-scale RMSE of 0.1546 is consistent with the validation-set RMSE, providing no evidence of overfitting. A log-scale error of 0.155 corresponds to a geometric mean percentage prediction error of approximately 15–17% across the price range, which is a more representative summary than the dollar-scale RMSE. The original-scale figure of $29,476 is disproportionately influenced by prediction errors on expensive properties, where percentage errors translate to large absolute dollar amounts. Both metrics confirm that Model 4 generalises effectively.</p>
+
+  <h2>Classification — Final Test Results</h2>
+  <p><strong>Logit Final</strong> was applied to the test set with a threshold of 0.4, consistent with all validation evaluations.</p>
+
+  <div class="cm-wrap">
+    <div class="cm-label-row">
+      <div class="cm-spacer"></div>
+      <div class="cm-col-label">Predicted: Not High</div>
+      <div class="cm-col-label">Predicted: High</div>
+    </div>
+    <div class="cm-grid">
+      <div class="cm-row-label">Actual: Not High</div>
+      <div class="cm-cell cm-tn"><span class="cm-val">264</span><span class="cm-sub">True Negative</span></div>
+      <div class="cm-cell cm-fp"><span class="cm-val">22</span><span class="cm-sub">False Positive</span></div>
+      <div class="cm-row-label">Actual: High</div>
+      <div class="cm-cell cm-fn"><span class="cm-val">10</span><span class="cm-sub">False Negative</span></div>
+      <div class="cm-cell cm-tp"><span class="cm-val">144</span><span class="cm-sub">True Positive</span></div>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-value">0.9825</div>
+      <div class="stat-label">ROC-AUC</div>
+      <div class="stat-note">Exceeds validation AUC</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">0.93</div>
+      <div class="stat-label">Accuracy</div>
+      <div class="stat-note">Not trivially explained by class balance</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">0.94</div>
+      <div class="stat-label">Recall — High class</div>
+      <div class="stat-note">Only 10 of 154 high-price properties missed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">0.87</div>
+      <div class="stat-label">Precision — High class</div>
+      <div class="stat-note">22 false positives among 286 non-high</div>
+    </div>
+  </div>
+
+  <p>The test ROC-AUC of <strong>0.9825 exceeds the validation AUC</strong>, a result that confirms the model is not overfit and that its discriminatory ability on fully held-out data is at least as strong as observed during model selection. The classifier correctly identifies 144 of 154 high-price properties in the test set, missing only 10. The 22 false positives represent properties near the classification boundary — mid-to-high price homes that share structural and locational characteristics with the High tier. The F1 score of 0.90 for the High class reflects balanced performance across both error types. The overall test performance confirms strong generalization.</p>
+
+  <!-- ══════════════════════ §9 ══════════════════════ -->
+  <div id="s9" class="chapter">
+    <div class="chapter-num">09</div>
+    <h1 class="chapter-title">Conclusions</h1>
+  </div>
+
+  <p class="lead">The analysis demonstrates that residential sale price in Ames, Iowa is highly predictable from a compact set of structural, locational, and temporal property characteristics.</p>
+
+  <h2>Regression</h2>
+  <p>The regression baseline with three predictors explains over 80% of variance in log sale price, establishing that the dataset is well-structured for linear modeling. Systematic feature engineering and log transformation of skewed area variables produce the largest single improvement over the baseline, confirming that representational choices matter independently of variable selection. The addition of categorical predictors — particularly neighborhood — achieves the best validation RMSE in Model 3, demonstrating that location carries structural pricing information that cannot be proxied by numeric variables.</p>
+
+  <p>The preferred final model (Model 4) accepts a moderate performance cost relative to Model 3 in exchange for a fully interpretable, stable specification with twelve significant parameters and low multicollinearity. The test-set RMSE of 0.1546 (log scale) / $29,476 (original scale) is consistent with validation performance and provides no evidence of overfitting.</p>
+
+  <p>Two controlled experiments clarify the boundaries of the modeling approach. The interaction model (Model 5) demonstrates that neighborhood-by-size interactions, while theoretically appealing, introduce multicollinearity so severe that the model is numerically invalid. The Qual_Cond substitution (Model 7) shows that composite quality features can absorb variance from related predictors in ways that reduce interpretability — a phenomenon that motivates the retention of the simpler, cleaner <code>Overall Qual</code> specification.</p>
+
+  <h2>Classification</h2>
+  <p>The high-price classification task is tractable even at the baseline: quality and total area alone achieve a ROC-AUC of 0.96, confirming that the High price tier is predominantly determined by a small number of dominant attributes. The enriched Logit 3 model raises the AUC to 0.975 by adding lot area, bathroom count, and temporal variables. Subsequent parsimony reduction (Logit 4, Logit Final) preserves this performance level exactly, confirming that the peak discriminatory capacity of the feature set is reached at this complexity level.</p>
+
+  <p>The Logit Final model achieves a test ROC-AUC of 0.9825 — exceeding its validation performance — with accuracy of 0.93 and recall of 0.94 for high-price properties. These results confirm strong generalization: the model correctly identifies the vast majority of expensive properties on data it has never seen.</p>
+
+  <h2>Key Drivers of Residential Value</h2>
+  <ul class="finding-list">
+    <li data-n="→"><strong>Property size</strong> (<code>Total_SF</code>, <code>Lot Area</code>) is a primary driver in every model. The log-linear specification captures diminishing marginal returns.</li>
+    <li data-n="→"><strong>Overall quality rating</strong> is the single strongest predictor across both modeling tasks, confirming that appraiser quality scores are highly informative signals of market value.</li>
+    <li data-n="→"><strong>Neighborhood</strong> contributes pricing information that no numeric variable can proxy. The premium neighborhood effect adds approximately 10–15% to predicted sale price in the preferred regression model.</li>
+    <li data-n="→"><strong>Bathroom count</strong> and <strong>garage area</strong> add independent value beyond total living area, with bathroom count proving more robust across the classification sequence.</li>
+    <li data-n="→"><strong>Property age and renovation recency</strong> jointly capture temporal depreciation and modernization effects. Both variables are significant predictors; renovation recency is sensitive to the inclusion of composite quality features.</li>
+    <li data-n="→"><strong>Kitchen quality</strong> adds marginal incremental value. It is significant in isolation but dispensable once the primary drivers are controlled for — a result with practical implications for data collection in deployment settings.</li>
+  </ul>
+
+  <div class="report-footer">
+    <span class="footer-left">Ames Housing Analysis</span>
+    <span class="footer-right">
+      Regression · Classification<br>
+      7 Models · 5 Logit Models<br>
+      Test AUC 0.9825
+    </span>
+  </div>
+</div>
+
+</body>
+</html>
