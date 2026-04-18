@@ -1,7 +1,7 @@
 # Predicting Residential Sale Price
 ## Ames Housing Dataset — Analytical Report
 
-> **Dataset:** Ames Housing · **Observations:** 2,930 · **Models estimated:** 12 · **Final test AUC:** 0.9825
+> **Dataset:** Ames Housing · **Observations:** 2,930 · **Models estimated:** 12
 
 ---
 
@@ -47,7 +47,7 @@ The project is organized across three notebooks with strict separation of respon
 
 ### Variable Landscape
 
-A profiling table was constructed for all 82 variables, reporting completeness, cardinality, data type, and summary statistics. Of the 82 variables, 43 are numeric and 39 are categorical. Numeric variables span a wide range of measurement scales, from counts (rooms, bathrooms) to areas in square feet and time-based variables (year built, year sold).
+A profiling table was constructed for all 82 variables, reporting completeness, cardinality, data type, and summary statistics. Of the 82 variables, 39 are numeric and 43 are categorical. Numeric variables span a wide range of measurement scales, from counts (rooms, bathrooms) to areas in square feet and time-based variables (year built, year sold).
 
 The target variable, `SalePrice`, exhibits strong right skew: the distribution has a long upper tail driven by a small number of premium properties. The interquartile range spans approximately $129,500 to $213,500, while individual sales extend above $500,000. This skew motivated the use of `log(SalePrice)` as the regression target throughout the modeling phase.
 
@@ -138,21 +138,19 @@ Despite this explanatory power, the original-scale RMSE is relatively high: log-
 
 **Specification:** `log(SalePrice) ~ Qual_Cond + log(Total_SF) + log(Lot Area) + log(Garage Area + 1) + Total_Bath + House_Age + Years_Since_Remod`
 
-This model tests whether systematic feature engineering and log transformation of skewed area variables — with no categorical predictors — can significantly outperform the baseline. `Overall Qual` is replaced by `Qual_Cond` (the product of quality and condition ratings), testing whether the joint quality-condition signal is more informative than quality alone.
-
-> **Note on `Qual_Cond` vs `Overall Qual`:** Models 2 and 7 use `Qual_Cond`; Models 1 and 3–6 use `Overall Qual`. This is intentional. Models 3–6 return to `Overall Qual` to allow a consistent categorical expansion path. Model 7 revisits `Qual_Cond` as a controlled substitution experiment within the full categorical specification.
+This model tests whether systematic feature engineering and log transformation of skewed area variables — with no categorical predictors — can significantly outperform the baseline.
 
 **Results and Interpretation**
 
-All seven predictors are statistically significant. The RMSE improvement over Model 1 is substantial. Log transformations on area variables reflect diminishing marginal returns to scale: the marginal value of an additional square foot declines as the property grows. `Total_Bath` adds value beyond what is captured by overall area. VIF values for all predictors remain below 5, confirming the absence of multicollinearity at this stage. The improvement over Model 1 demonstrates that the *form* of numeric representation matters independently of variable selection.
+All seven predictors are statistically significant. The RMSE improvement over Model 1 is substantial. Log transformations on area variables reflect diminishing marginal returns to scale: the marginal value of an additional square foot declines as the property grows. `Total_Bath` adds value beyond what is captured by overall area. VIF values for all predictors remain below 5, confirming the absence of multicollinearity at this stage. The improvement over Model 1 demonstrates that the form of numeric representation matters independently of variable selection.
 
 ---
 
 ### Model 3 — Full Categorical Expansion ✦ Best Validation RMSE
 
-**Specification:** Model 2 numeric base (with `Overall Qual`) + `C(Neighborhood_grouped)` + `C(Bldg Type)` + `C(Kitchen Qual)`
+**Specification:** Model 2 numeric base + `C(Neighborhood_grouped)` + `C(Bldg Type)` + `C(Kitchen Qual)`
 
-This model introduces the full set of categorical location and quality predictors, reverting to `Overall Qual` for consistency with the categorical expansion sequence. The hypothesis is that neighborhood, building type, and kitchen quality carry structural pricing information that no numeric variable can proxy. The granular `Neighborhood_grouped` encoding retains all neighborhood identifiers after consolidating rare levels into an `Other` category.
+This model introduces the full set of categorical location and quality predictors. The hypothesis is that neighborhood, building type, and kitchen quality carry structural pricing information that no numeric variable can proxy. The granular `Neighborhood_grouped` encoding retains all neighborhood identifiers after consolidating rare levels into an `Other` category.
 
 **Results and Interpretation**
 
@@ -416,4 +414,4 @@ The modeling process followed a principled structure: iterative complexity expan
 
 ---
 
-*Ames Housing Analysis · Regression and Classification · 7 regression models · 5 logistic models · Test AUC 0.9825*
+*Ames Housing Analysis · Regression and Classification · 7 regression models · 5 logistic models*
